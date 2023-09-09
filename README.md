@@ -133,24 +133,28 @@ return (
 📍 `/pages/_app.js`는 청사진과 같다.
 Next.js는 `App` 컴포넌트를 사용하여 페이지를 초기화한다.
 앱 컴포넌트를 재정의하고 페이지 초기화를 제어할 수 있다. 또한,
+
 - 페이지 변경 사이에 공유 레이아웃 만들기
 - 페이지에 추가 데이터 삽입
 - global(전역) CSS 추가
 
 1. 사용방법
+
 ```jsx
-import type { AppProps } from 'next/app'
- 
+import type { AppProps } from "next/app";
+
 export default function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  return <Component {...pageProps} />;
 }
 ```
+
 - `Component` prop은 활성(active) `페이지`이므로, 경로 사이를 탐색할 때마다, `Component`가 새 `페이지`로 변경된다.
-따라서 `Component`에 보내는 모든 prop은 `페이지`에서 수신된다.
+  따라서 `Component`에 보내는 모든 prop은 `페이지`에서 수신된다.
 
 - `pageProps`는 데이터 가져오기 메서드 중 하나에 의해 페이지에 미리 로드된 초기 props가 포함된 객체(오브젝트)이거나 빈 객체이다.
 
 2. 커스텀 앱에 전역 CSS 추가하기
+
 ```jsx
 import NavBar from "@/components/Navbar";
 
@@ -165,5 +169,4 @@ export default function App({ Component, pageProps }) {
 ```
 
 - `커스텀 App` 이외의 파일에서는 css파일을 import할 수 없다. css를 임포트하고 싶다면 반드시 module 형태(`.module.css`)여야 한다. 이는 글로벌 css간의 충돌을 피하기 위해서이다.
-
 - 따라서 `globals.css` 파일을 `_app.js` 에 import 해서 사용하면된다.
