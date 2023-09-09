@@ -19,11 +19,7 @@ export default function NavBar() {
       <style jsx global>{`
         nav {
           background-color: tomato;
-        }
-
-        a {
-          text-decoration: none;
-          color: black;
+          height: 2rem;
         }
 
         .active {
