@@ -253,3 +253,167 @@ export default function App({ Component, pageProps }) {
 - Layout 컴포넌트로 감싸진 부분인 `<Component {...pageProps} />`가 `children`이 된다.
 
 너무 큰 `_app.js` 파일을 원하지 않으므로 레이아웃 패턴을 많이 사용한다.
+
+## 📝 API Keys 숨기기
+
+`useState`와 `useEffect`를 이용하여 데이터를 페치해 온다고 해보자.
+
+```jsx
+import Seo from "@/components/Seo";
+import { useEffect, useState } from "react";
+
+const API_KEY = "어쩌구저쩌구";
+
+export default function Home() {
+  const [movies, setMovies] = useState();
+
+  //fetch data
+  useEffect(() => {
+    (async () => {
+      const response = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`
+      );
+      const { results } = await response.json();
+      //console.log(results)
+      setMovies(results);
+    })();
+  }, []);
+  return (
+    <div className="container">
+      <Seo title="Home" />
+      {!movies && <h4>Loading...</h4>}
+      {movies?.map((movie) => (
+        <div className="movie" key={movie.id}>
+          <img src={`https://image.tmdb.org/t/p/w500/${movie.poster_path}`} />
+          <h4>{movie.title}</h4>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+이런식으로 api키를 작성해두면 브라우저의 네트워크 탭을 열어보면 api키가 다 까발린다.
+api키를 숨기기 위해 `next.config.json` 파일을 사용해 보자.
+redirect 와 rewrite는 마치 유저의 요청(request)에 마스크를 씌워주는 것 같이 작동한다.
+
+### redirect
+
+#### 1. redirect로 한 페이지에서 다른 페이지로 이동할 수 있다. 또는 다른 url의 웹사이트로도 이동할 수 있다.
+
+📍 `next.config.json`
+
+```json
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/contact",
+        destination: "/form",
+        permanent: false
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+- `redirects()` 함수는 `반환 값`으로 오브젝트를 가진 어레이 `[{}]`를 가진다.
+
+- `source: "/contact"`, `destination: "/form"`
+  유저가 /contact 로 이동하면, /form으로 이동 시킨다는 뜻이다.
+
+- `permanent: false`
+  이 redirection이 permanent(영구적)인지 아닌지에 따라, 브라우저나 검색엔진이 이 정보를 기억하는지 여부가 결정된다.
+
+- `next.config.json` 파일을 변경할 경우 변경 내용 적용하려면 서버를 재시작해야 한다.
+
+#### 2. redirect는 pattern matching도 지원한다.
+
+📍 `next.config.json`
+
+```json
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/old-blog/:path",
+        destination: "/new-blog/:path",
+        permanent: false
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+#### 주소 뒤에 \*을 붙여주면 :path 뿐만 아니라 뒤에 붙는 모든 것을 캐치할 수 있다.
+
+📍 `next.config.json`
+
+```json
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/old-blog/:path*",
+        destination: "/new-blog/:path*",
+        permanent: false
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+그러면 `/old-blog/12312/comments/123` 이런 식의 소스에 접근하면,
+자동으로 `/new-blog/12312/comments/123` 이렇게 바뀐다.
+
+- 이처럼 redirect는 유저가 url이 바뀌는 것을 모두 볼 수 있다.
+- 즉, redirect로는 api key를 숨기지 못한다.
+
+### rewrite
+
+rewrites은 redirects와 다르다.
+
+- redirects로 old-blog로 접속하면 유저는 말 그대로 url이 new-blog로 바뀌는 걸 볼 수 있따.
+- 하지만 rewrites은 유저를 redirect 시키기는 하지만 url은 변하지 않는다.
+
+데이터를 페치할 때 api_key를 숨기고 싶다면 rewrite가 적격이다!
+
+```json
+const API_KEY = process.env.API_KEY;
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+
+  async rewrites() {
+    return [
+      {
+        source: "/api/movies",
+        destination: `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`,
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+이제 source에 적힌 `"/api/movies"`를 데이터 페치에 넣어주면 API KEY를 숨길 수 있다.
+
+next.js가 `"/api/movies"`로 페치하는 request를 가려서(masking `destination`에 적힌 주소로 보낸다.
+일종의 fake fetching url을 가지게 되는거다.
+
+네트워크 탭에서도 request url이 `"/api/movies"`로 되어 있고, api키는 숨겨져 있다.
+그럼에도 response 탭을 보면 모든 movies 정보가 뜨는 것을 확인할 수 있다.
