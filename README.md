@@ -294,16 +294,30 @@ export default function Home() {
 ```
 
 이런식으로 api키를 작성해두면 브라우저의 네트워크 탭을 열어보면 api키가 다 까발린다.
-api키를 숨기기 위해 `next.config.json` 파일을 사용해 보자.
-redirect 와 rewrite는 마치 유저의 요청(request)에 마스크를 씌워주는 것 같이 작동한다.
+api키를 숨기기 위해 `next.config.js` 파일을 사용해 보자.
 
-### redirect
+#### [next.config.js](https://nextjs.org/docs/api-reference/next.config.js/introduction)
+
+Next.js에서 커스텀 설정을 하기 위해서는 프로젝트 디렉터리의 루트(package.json 옆)에 `next.config.js` 또는 `next.config.mjs` 파일을 만들 수 있다.
+
+- `next.config.js`는 일반 Node.js 모듈이다.
+- Next.js 서버 및 빌드 단계에서 사용되며 브라우저 빌드에는 포함되지 않는다.
+
+redirects 와 rewrites는 마치 유저의 요청(request)에 마스크를 씌워주는 것 같이 작동한다.
+
+### [redirects()](https://nextjs.org/docs/api-reference/next.config.js/redirects)
+
+**redirects**은 `source`, `destination` 및 `permanent` 속성이 있는 **객체**를 포함하는 **배열**을 **반환**하는 **비동기 함수**입니다.
+
+- `source`: 들어오는 request 경로 패턴 (request 경로)
+- `destination`: 라우팅하려는 경로 (redirect할 경로)
+- `permanent`: true인 경우 클라이언트와 search 엔진에 redirect를 영구적으로 cache하도록 지시하는 308 status code를 사용하고, false인 경우 일시적이고 cache되지 않은 307 status code를 사용
 
 #### 1. redirect로 한 페이지에서 다른 페이지로 이동할 수 있다. 또는 다른 url의 웹사이트로도 이동할 수 있다.
 
 📍 `next.config.json`
 
-```json
+```js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -312,7 +326,7 @@ const nextConfig = {
       {
         source: "/contact",
         destination: "/form",
-        permanent: false
+        permanent: false,
       },
     ];
   },
@@ -321,7 +335,7 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
-- `redirects()` 함수는 `반환 값`으로 오브젝트를 가진 어레이 `[{}]`를 가진다.
+- `redirects()` 비동기 함수는 `반환 값`으로 오브젝트를 가진 어레이 `[{}]`를 가진다.
 
 - `source: "/contact"`, `destination: "/form"`
   유저가 /contact 로 이동하면, /form으로 이동 시킨다는 뜻이다.
@@ -335,7 +349,7 @@ module.exports = nextConfig;
 
 📍 `next.config.json`
 
-```json
+```js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -344,7 +358,7 @@ const nextConfig = {
       {
         source: "/old-blog/:path",
         destination: "/new-blog/:path",
-        permanent: false
+        permanent: false,
       },
     ];
   },
@@ -357,7 +371,7 @@ module.exports = nextConfig;
 
 📍 `next.config.json`
 
-```json
+```js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -366,7 +380,7 @@ const nextConfig = {
       {
         source: "/old-blog/:path*",
         destination: "/new-blog/:path*",
-        permanent: false
+        permanent: false,
       },
     ];
   },
@@ -381,14 +395,13 @@ module.exports = nextConfig;
 - 이처럼 redirect는 유저가 url이 바뀌는 것을 모두 볼 수 있다.
 - 즉, redirect로는 api key를 숨기지 못한다.
 
-### rewrite
+### [rewrites()](https://nextjs.org/docs/api-reference/next.config.js/rewrites)
 
-rewrites은 redirects와 다르다.
+Rewrites를 사용하면 **들어오는 request 경로를 다른 `destination` 경로에 매핑**할 수 있다.
 
-- redirects로 old-blog로 접속하면 유저는 말 그대로 url이 new-blog로 바뀌는 걸 볼 수 있따.
-- 하지만 rewrites은 유저를 redirect 시키기는 하지만 url은 변하지 않는다.
-
-데이터를 페치할 때 api_key를 숨기고 싶다면 rewrite가 적격이다!
+- Rewrites은 URL 프록시 역할을 하고 `destination` 경로를 mask하여 사용자가 사이트에서 위치를 변경하지 않은 것처럼 보이게 한다. 반대로 redirects은 새 페이지로 reroute되고 URL 변경 사항을 표시한다.
+- 즉, redirects로 old-blog로 접속하면 유저는 말 그대로 url이 new-blog로 바뀌는 걸 볼 수 있지만, rewrites은 유저를 redirect 시키기는 하지만 url은 변하지 않는다.
+- 데이터를 페치할 때 api_key를 숨기고 싶다면 rewrite가 적격이다.
 
 ```json
 const API_KEY = process.env.API_KEY;
@@ -412,8 +425,11 @@ module.exports = nextConfig;
 
 이제 source에 적힌 `"/api/movies"`를 데이터 페치에 넣어주면 API KEY를 숨길 수 있다.
 
-next.js가 `"/api/movies"`로 페치하는 request를 가려서(masking `destination`에 적힌 주소로 보낸다.
+next.js가 `"/api/movies"`로 페치하는 request를 가려서(masking)`destination`에 적힌 주소로 보낸다.
 일종의 fake fetching url을 가지게 되는거다.
 
 네트워크 탭에서도 request url이 `"/api/movies"`로 되어 있고, api키는 숨겨져 있다.
 그럼에도 response 탭을 보면 모든 movies 정보가 뜨는 것을 확인할 수 있다.
+
+> 참고
+> api에 한글이 있는 경우 주소 전체를 `encodeURI()`로 감싸면 된다.
