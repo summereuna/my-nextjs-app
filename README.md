@@ -1,6 +1,51 @@
 # NextJS 연습
 
+## 📚 라이브러리 vs 프레임워크
+
+- 라이브러리는 내가 라이브러리를 호출
+- 프레임워크는 프레임워크가 내 코드를 호출
+  프레임워크가 정한 규칙에 따라 코드를 작성해야 한다.
+
+## 📚 CSR(Client Side Rendering) vs SSR(Server Side Rendering)
+
+### ReactJS 앱
+
+CRA(create-react-app)로 만든 react.js app의 경우 때때로 로딩 시 유저에게 흰 화면을 보여준다.
+
+클라이언트 사이드 렌더링의 특징은 브라우저가 유저가 보는 UI를 만드는 모든 것을 한다는 것이다. 초기에 HTML로 렌더링 될 때, react.js로 렌더링 된 모든 것들이 HTML 소스 코드 안에 포함되지 않은 채로 렌더링 된다.
+
+- 브라우저가 HTML을 가져올 때 `id=root`인 빈 div를 가져온다.
+- 그러고 나서 브라우저는 모든 JavaScript를 요청(request)하여 브라우저가 JavaScript와 reactJS를 실행(run)시킨다.
+- 그러고 나서 UI가 만들어지기 때문에 어플리케이션이 유저에게 보인다.
+- 따라서 초기에 로딩될 때 유저가 흰 화면을 보게 될 수도 있다.
+
+### NextJS 앱
+
+이에 반해 NextJS는 HTML 소스 코드 안에 이미 코드가 포함된 채로 유저에게 제공된다.
+유저가 페이지를 요청하면, 이미 초기화된 코드 안에 코드가 포함되어 있는 것이다. 즉, pre-rendering 된 채로 유저에게 보여진다.
+
+- next.js는 react.js를 백엔드에서 동작시켜 페이지를 미리 만든다.
+- 백엔드에서 react.js가 컴포넌트를 렌더하고, 렌더가 끝나면 HTML이 된다.
+- next.js는 그 HTML을 페이지의 소스 코드에 넣는다.
+- 그럼 유저는 js나 react.js가 로딩되지 않더라고 컨텐츠를 볼 수 있게 된다. 페이지를 열면 미리 렌더링된 HTML을 바로 볼 수 있다.
+- 그리고 react.js가 클라이언트로 전송될 때, react 앱이 된다. react.js를 프론트엔드 안에서 실행하는 것을 `hydration`이라고 한다. 그래서 useState()같은걸 쓸 수 있다.
+
 ## 📝 네비게이션
+
+지정된 📍`/pages` 폴더에 `페이지`를 만들 수 있다.
+
+- `/` 페이지: 📍`/pages/index.js`
+- `/about` 페이지: 📍`/pages/about.js`
+
+```jsx
+export default function Home() {
+  return (
+    <div>
+      <h1>Home</h1>
+    </div>
+  );
+}
+```
 
 ### ⭐️ 1. Link
 
@@ -170,3 +215,41 @@ export default function App({ Component, pageProps }) {
 
 - `커스텀 App` 이외의 파일에서는 css파일을 import할 수 없다. css를 임포트하고 싶다면 반드시 module 형태(`.module.css`)여야 한다. 이는 글로벌 css간의 충돌을 피하기 위해서이다.
 - 따라서 `globals.css` 파일을 `_app.js` 에 import 해서 사용하면된다.
+
+## 패턴: Layout 패턴
+
+1. `Layout.js`라는 react component를 만든다.
+
+```js
+import NavBar from "./Navbar";
+
+export default function Layout({ children }) {
+  return (
+    <>
+      <NavBar />
+      <div>{children}</div>
+    </>
+  );
+}
+```
+
+- Layout 컴포넌트는 react.js가 제공하는 `prop.children`을 가지는데, `children`은 하나의 컴포넌트를 다른 컴포넌트 안에 넣을 때 사용할 수 있다.
+
+2. `_app.js`의 jsx를 `Layout` 컴포넌트로 감싼다.
+
+```js
+import "../styles/globals.css";
+import Layout from "@/components/Layout";
+
+export default function App({ Component, pageProps }) {
+  return (
+    <Layout>
+      <Component {...pageProps} />
+    </Layout>
+  );
+}
+```
+
+- Layout 컴포넌트로 감싸진 부분인 `<Component {...pageProps} />`가 `children`이 된다.
+
+너무 큰 `_app.js` 파일을 원하지 않으므로 레이아웃 패턴을 많이 사용한다.
