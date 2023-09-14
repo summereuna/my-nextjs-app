@@ -47,7 +47,7 @@ export default function Home() {
 }
 ```
 
-### ⭐️ 1. Link
+#### ⭐️ 1. Link
 
 Next.js에서는 `"next/link"`에서 가져온 Link 컴포넌트로 페이지를 네비게이트 할 수 있다.
 
@@ -55,11 +55,41 @@ Next.js에서는 `"next/link"`에서 가져온 Link 컴포넌트로 페이지를
 
 Link는 nextjs의 클라이언트 사이드 네비게이션을 제공한다.
 
-### ⭐️ 2. useRouter()
+#### ⭐️ 2. useRouter()
 
 Next.js에서는 `"next/router"`에서 useRouter를 가져와 라우터를 바로 사용할 수 있다.
 
 - `const router = useRouter()`
+
+### 중첩 라우팅
+
+`/movies` 경로: `pages` 폴더에 `movies.js`파일을 만들면 된다.
+
+하지만 `/movies` 경로 뒤에 다른 경로가 더 붙는다면 중첩 라우팅을 사용하면 된다.
+
+- 먼저 `/pages/movies` 폴더를 만들고 `index.js` 파일을 만들면 `/movies` 경로를 만들 수 있다.
+
+- 그리고 `/pages/movies` 폴더에 `all.js`파일을 만들면 `/movies/all` 경로를 만들 수 있다.
+
+### [Dynamic Routes](https://nextjs.org/docs/routing/dynamic-routes)
+
+Next.js에서는 page에 대괄호`[param]`를 추가하여 Dynamic Route를 생성할 수 있다.
+
+- `/pages/movies`에 `[id].js` 파일을 만들면 `/movies/123`, `/movies/abc` 등과 같은 모든 경로와 일치하는 다이나믹 루트가 된다.
+
+```js
+const router = useRouter();
+const { id } = router.query;
+```
+
+- useRouter로 query를 잡아보면 id가 나오는데, 이 id는 파일명에 쓰인 변수명과 동일하다.
+
+### [Catch all routes](https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes)
+
+대괄호 안에 세 개의 점(`...`)을 추가하여 **모든 경로를 포착**하도록 Dynamic Routes를 확장할 수 있다.
+
+- `pages/movies/[...id].js`는 `/movies/1`과 일치하고, `/movies/1/2`, `/movies/1/ab/cd` 등 과도 일치한다.
+- 일치하는 매개변수는 페이지에 쿼리 매개변수로 전송되고, 항상 **배열**이므로 `/movies/a` 경로에는 `{ "id": ["a"] }` 쿼리 객체가 있다. `/movies/a/bcd` 경로의 라우터 쿼리에는 `{ "id": ["a", "bcd"] }` 객체가 있다.
 
 ## 📝 [NextJS에 css 추가하기](https://nextjs.org/docs/app/building-your-application/styling)
 

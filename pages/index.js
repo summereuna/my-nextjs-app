@@ -1,4 +1,5 @@
 import Seo from "@/components/Seo";
+import Link from "next/link";
 
 export default function Home({ results }) {
   // const [movies, setMovies] = useState();
@@ -16,12 +17,26 @@ export default function Home({ results }) {
     <div className="container">
       <Seo title="Home" />
       {results.map((movie) => (
-        <div className="movie" key={movie.id}>
-          <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
-          <h4>{movie.title}</h4>
-        </div>
+        <Link
+          //string을 보낼수도 있지만 객체를 보낼 수도 있음
+          href={{
+            pathname: `movies/${movie.title}/${movie.id}`,
+            //정보 url에 담아 보내기
+            query: {
+              poster: movie.poster_path,
+              release: movie.release_date,
+              overview: movie.overview,
+            },
+          }}
+          as={`movies/${movie.title}/${movie.id}`} //as 사용하면 브라우저의 url을 마스킹함, 브라우저에게 보일 url 설정 가능
+          key={movie.id}
+        >
+          <div className="movie">
+            <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
+            <h4>{movie.title}</h4>
+          </div>
+        </Link>
       ))}
-
       <style jsx>{`
         .container {
           display: grid;
