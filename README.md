@@ -403,7 +403,7 @@ Rewrites를 사용하면 **들어오는 request 경로를 다른 `destination` �
 - 즉, redirects로 old-blog로 접속하면 유저는 말 그대로 url이 new-blog로 바뀌는 걸 볼 수 있지만, rewrites은 유저를 redirect 시키기는 하지만 url은 변하지 않는다.
 - 데이터를 페치할 때 api_key를 숨기고 싶다면 rewrite가 적격이다.
 
-```json
+```js
 const API_KEY = process.env.API_KEY;
 
 /** @type {import('next').NextConfig} */
@@ -431,5 +431,57 @@ next.js가 `"/api/movies"`로 페치하는 request를 가려서(masking)`destina
 네트워크 탭에서도 request url이 `"/api/movies"`로 되어 있고, api키는 숨겨져 있다.
 그럼에도 response 탭을 보면 모든 movies 정보가 뜨는 것을 확인할 수 있다.
 
-> 참고
+> **📝 참고: **
 > api에 한글이 있는 경우 주소 전체를 `encodeURI()`로 감싸면 된다.
+
+## CSR vs SSR
+
+Next.js는 페이지를 미리 html로 export한다. Next.js에서 CSR과 SSR을 비교해보자.
+
+- CSR: 모든 JS파일이 들어와야 `loading...`이 보인다. 그러고 나서 데이터가 들어오면 데이터도 볼수 있다. 다른 페이지 넘어갈 때는 이미 JS파일은 모두 있기 때문에 빠르게 화면이 전환된다.
+
+- SSR: 해당 페이지의 data는 서버에서 페치되기 때문에 초기 html에서 바로 데이터를 볼 수 있다. 하지만 다른 페이지 넘어갈 때도 이 과정이 필요하다.
+
+### CSR(Client Side Rendering)
+
+초기 html 페이지를 보면 아직 데이터가 없다.(소스코드)
+
+- 유저가 홈페이지 접속 시, react.js가 처리를 마치기 전까지는 실제 html 소스코드를 보면 "로딩중..."만 있다.
+- react.js가 처리를 마치면, 즉 useEffect, useState, fetch 를 하고 나서는 데이터가 state에 넣어지고 화면에 렌더링된다. 즉, 리액트의 처리가 완료될 때 까지 조금 기다려야 데이터를 볼 수 있다.
+
+### SSR (Server Side Rendering)
+
+데이터를 모두 받아온 후 완전한 상태로 초기 html을 export하고 싶다면, 서버 사이드 렌더링을 하면 된다.
+
+이를 위해 `getServerSideProps()` 비동기 함수를 사용하면 된다.
+
+- page에서 서버 측 렌더링 함수인 `getServerSideProps()` 함수를 export하면 next.js는 이 함수에서 `반환된 데이터(props 키를 가진 object)`를 사용하여 각 request에서 이 페이지를 pre-render한다.
+- 이 함수는 서버측에서만 실행되고, 브라우저에서는 실행되지 않는다. 따라서 API Key를 여기서 바로 써도 괜찮으므로 rewrites 사용하지 않아도 된다.
+
+#### getServerSideProps() 함수 사용하여 데이터 페치하는 방법
+
+```js
+export default function Home({ data }) {
+  //props로 전달받은 data를 사용하여 데이터 렌더링
+  //데이터 렌더링
+  return (
+    <div>
+      {data.map((item) => (
+        <div key={item.id}>
+          <h4>{item.title}</h4>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+//매 request 마다 실행
+export async function getServerSideProps() {
+  const res = await fetch(`https://...`);
+  const data = await res.json();
+  return { props: { data } }; //props 통해 data 전달
+}
+```
+
+이렇게 nextJS가 자동으로 props를 넣어주면, reactJS가 이 props을 받아서 `흡수(hydrate)`하여 사용할 수 있도록 준비된다.
+리액트는 이 data를 가지고 state를 하든 뭐든 할 수 있게 된다.
